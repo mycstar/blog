@@ -1,0 +1,79 @@
+$ sudo add-apt-repository -y ppa:teejee2008/ppa
+$ sudo apt-get update
+$ sudo apt-get install timeshift
+use above command to install timeshift in ubuntu server 18.04. 
+reference https://github.com/teejee2008/timeshift and https://www.fossmint.com/backup-restore-linux-with-timeshift/
+
+
+use timeshift on ubuntu server 18.04, since server don't have GUI, i must try them in command line way
+first create a snapshot for system file.
+sudo timeshift --create --comments "init configure" --snapshot-device /dev/md127
+create output will be:
+------------------------------------------------------------------------------
+Creating new snapshot...(RSYNC)
+Saving to device: /dev/md127, mounted at path: /mnt/data
+Synching files with rsync...
+Created control file: /mnt/data/timeshift/snapshots/2019-05-01_00-01-41/info.json
+RSYNC Snapshot saved successfully (31s)
+Tagged snapshot '2019-05-01_00-01-41': ondemand
+------------------------------------------------------------------------------
+
+here --snapshot-device is some place you want place you backup file, must some deivice name, can't be a directory, after command execute will create a directory on this device, for example this device mount on /mnt/data, then you will find a directory 'timeshift' below /mnt/data folder, 
+in /mnt/data/timeshift, there will several folder create, since i use command line to create backup, so my backup hold in folder snpashots, in which, localhost folder hold real backup file:
+total 28K
+drwxr-xr-x 3 root root 4.0K May  1 00:01 snapshots
+drwxr-xr-x 2 root root 4.0K May  1 00:02 snapshots-boot
+drwxr-xr-x 2 root root 4.0K May  1 00:02 snapshots-daily
+drwxr-xr-x 2 root root 4.0K May  1 00:02 snapshots-hourly
+drwxr-xr-x 2 root root 4.0K May  1 00:02 snapshots-monthly
+drwxr-xr-x 2 root root 4.0K May  1 00:02 snapshots-ondemand
+drwxr-xr-x 2 root root 4.0K May  1 00:02 snapshots-weekly
+
+total 24M
+-rw-r--r--  1 root root  868 May  1    00:01 exclude.list
+-rw-r--r--  1 root root  277 May  1    00:02 info.json
+drwxr-xr-x 23 root root 4.0K Apr 30 23:50 localhost
+-rw-r--r--  1 root root  14M May  1    00:02 rsync-log
+-rw-r--r--  1 root root  11M May  1    00:02 rsync-log-changes
+
+use below command to check you backup:
+sudo timeshift --list --snapshot-device /dev/md27
+here --snapshot-device  same as create command,  below is list ouput:
+Device : /dev/md127 (sdd1)
+UUID   : 793701d3-b3b4-4d4c-84dd-b97507749910
+Path   : /mnt/data0
+Mode   : RSYNC
+Device is OK
+1 snapshots, 2.0 TB free
+
+Num     Name                 Tags  Description     
+------------------------------------------------------------------------------
+0    >  2019-05-01_00-01-41  O     init configure  
+
+if you want to delete some backup:
+sudo timeshift --delete --snapshot '2019-05-01_00-01-41'
+because my backup locate at raid1 disk, so here ask me which backup device, like here, i will select 6, 
+Select backup device:
+
+Num     Device                  Size  Type  Label  
+------------------------------------------------------------------------------
+0    >  /dev/md0 (sdb1)     482.3 MB  ext2         
+1    >  /dev/md0 (sda1)     498.1 MB  ext2         
+2    >  /dev/md1 (sdb2)      19.5 GB  ext4         
+3    >  /dev/md1 (sda2)      20.0 GB  ext4         
+4    >  /dev/md3 (sdb4)     207.0 GB  ext4         
+5    >  /dev/md3 (sda4)     211.4 GB  ext4         
+6    >  /dev/md127 (sdd1)  1967.8 GB  ext4         
+7    >  /dev/md127 (sdc1)  2000.3 GB  ext4         
+
+Enter device name or number (a=Abort): 6
+
+after  type 6, delete finished, 6, 7 (are two raid1 disk) both will no snapshot exist. :
+
+------------------------------------------------------------------------------
+Removing '2019-05-01_00-01-41'...
+Removed '2019-05-01_00-01-41'                                                   
+------------------------------------------------------------------------------
+
+
+
